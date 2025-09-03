@@ -1,0 +1,208 @@
+From: GitHub Copilot <copilot@users.noreply.github.com>
+Date: Wed, 3 Sep 2025 12:15:00 +0000
+Subject: Add "Import from URL" option for Userscripts on Android
+
+This patch adds an option in the Userscripts settings to import a
+userscript by entering a URL. It downloads the script in Java
+(using HttpURLConnection), stores it in app cache, and then
+invokes the existing TryToInstall flow.
+
+---
+ components/user_scripts/android/java/src/org/chromium/components/user_scripts/ScriptListPreference.java | 39 ++++++++++++++++
+ components/user_scripts/android/java/src/org/chromium/components/user_scripts/UserScriptsBridge.java    | 99 +++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 138 insertions(+)
+
+diff --git a/components/user_scripts/android/java/src/org/chromium/components/user_scripts/ScriptListPreference.java b/components/user_scripts/android/java/src/org/chromium/components/user_scripts/ScriptListPreference.java
+--- a/components/user_scripts/android/java/src/org/chromium/components/user_scripts/ScriptListPreference.java
++++ b/components/user_scripts/android/java/src/org/chromium/components/user_scripts/ScriptListPreference.java
+@@ -27,6 +27,8 @@
+ import androidx.recyclerview.widget.RecyclerView.ViewHolder;
+ 
+ import org.chromium.ui.base.WindowAndroid;
++import android.app.AlertDialog;
++
+ import org.chromium.ui.base.ActivityWindowAndroid;
+ 
+ import org.chromium.base.ApplicationStatus;
+ import org.chromium.base.ContextUtils;
+@@ -111,9 +113,26 @@ public class ScriptListPreference extends Preference {
+         mAddButton = (TextView) holder.findViewById(R.id.add_script);
+         mAddButton.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                 TintedDrawable.constructTintedDrawable(
+                         getContext(), R.drawable.plus, R.color.default_control_color_active_baseline),
+                 null, null, null);
+-        mAddButton.setOnClickListener(view -> {
+-            UserScriptsBridge.SelectAndAddScriptFromFile(mWindowAndroid);
+-        });
++        mAddButton.setOnClickListener(view -> {
++            // Present choices: select from file or enter URL
++            CharSequence[] options = new CharSequence[]{
++                    getContext().getString(R.string.add_script),
++                    "Enter URL"
++            };
++            new AlertDialog.Builder(getContext())
++                    .setTitle(R.string.add_script)
++                    .setItems(options, (dialog, which) -> {
++                        if (which == 0) {
++                            UserScriptsBridge.SelectAndAddScriptFromFile(mWindowAndroid);
++                        } else {
++                            UserScriptsBridge.PromptAndAddScriptFromUrl(mWindowAndroid);
++                        }
++                    })
++                    .show();
++        });
+ 
+         mRecyclerView = (RecyclerView) holder.findViewById(R.id.script_list);
+         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+         mRecyclerView.setLayoutManager(layoutManager);
+         mRecyclerView.addItemDecoration(
+         new DividerItemDecoration(getContext(), layoutManager.getOrientation()));
+@@ -146,6 +165,8 @@ public class ScriptListPreference extends Preference {
+     public void OnUserScriptLoaded(boolean result, String error) {
+         if (result == false) {
+             Toast toast = Toast.makeText(getContext(), error, Toast.LENGTH_LONG);
+             toast.show();
+         }
+     }
+ }
+ diff --git a/components/user_scripts/android/java/src/org/chromium/components/user_scripts/UserScriptsBridge.java b/components/user_scripts/android/java/src/org/chromium/components/user_scripts/UserScriptsBridge.java
+--- a/components/user_scripts/android/java/src/org/chromium/components/user_scripts/UserScriptsBridge.java
++++ b/components/user_scripts/android/java/src/org/chromium/components/user_scripts/UserScriptsBridge.java
+@@ -21,12 +21,23 @@ package org.chromium.components.user_scripts;
+ 
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.lang.ref.WeakReference;
+ 
++import java.io.File;
++import java.io.FileOutputStream;
++import java.io.InputStream;
++import java.io.IOException;
++import java.net.HttpURLConnection;
++import java.net.URL;
++
+ import org.json.JSONArray;
+ import org.json.JSONException;
+ import org.json.JSONObject;
+ 
+ import android.content.Context;
+ import android.content.Intent;
++import android.os.Handler;
++import android.os.Looper;
+ import android.net.Uri;
+ import android.provider.MediaStore;
+ import androidx.annotation.Nullable;
+ import android.app.AlertDialog;
+ import android.content.DialogInterface;
++import android.text.InputType;
++import android.widget.EditText;
++import android.widget.Toast;
++import android.webkit.URLUtil;
+ 
+ import org.jni_zero.CalledByNative;
+ import org.jni_zero.JNINamespace;
+ import org.jni_zero.NativeMethods;
+ import org.chromium.base.ContentUriUtils;
+@@ -124,6 +135,94 @@ public class UserScriptsBridge {
+             null);
+     }
+ 
+     public static void TryToInstall(Context context, String ScriptFullPath) {
+         DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+             @Override
+             public void onClick(DialogInterface dialog, int which) {
+                 switch (which){
+                     case DialogInterface.BUTTON_POSITIVE:
+                         UserScriptsBridgeJni.get().tryToInstall(ScriptFullPath);
+                         break;
+ 
+                     case DialogInterface.BUTTON_NEGATIVE:
+                         break;
+                 }
+             }
+         };
+ 
+         String scriptName = ScriptFullPath;
+         if (ContentUriUtils.isContentUri(scriptName)) {
+             scriptName = ContentUriUtils.getFilePathFromContentUri(Uri.parse(scriptName));
+             if (scriptName == null) {
+                 // fallback to content uri name if fail
+                 scriptName = ContentUriUtils.getDisplayName(Uri.parse(ScriptFullPath), context,
+                     MediaStore.MediaColumns.DISPLAY_NAME);
+             }
+         }
+ 
+         String message = context.getString(R.string.ask_to_install, scriptName);
+ 
+         AlertDialog.Builder builder = new AlertDialog.Builder(context);
+         builder.setMessage(message)
+             .setPositiveButton(context.getString(R.string.ok), dialogClickListener)
+             .setNegativeButton(context.getString(R.string.no), dialogClickListener)
+             .show();
+     }
++
++    public static void PromptAndAddScriptFromUrl(WindowAndroid window) {
++        Context context = window.getContext().get();
++        if (context == null) return;
++
++        final EditText input = new EditText(context);
++        input.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
++
++        new AlertDialog.Builder(context)
++                .setTitle("Enter URL")
++                .setView(input)
++                .setPositiveButton(context.getString(R.string.ok), (dialog, which) -> {
++                    String urlStr = input.getText().toString().trim();
++                    if (urlStr.isEmpty()) return;
++                    if (!(urlStr.startsWith("http://") || urlStr.startsWith("https://"))) {
++                        Toast.makeText(context, "Only http(s) URLs are supported", Toast.LENGTH_LONG).show();
++                        return;
++                    }
++                    new Thread(() -> {
++                        try {
++                            URL url = new URL(urlStr);
++                            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
++                            conn.setInstanceFollowRedirects(true);
++                            conn.setConnectTimeout(15000);
++                            conn.setReadTimeout(30000);
++                            int code = conn.getResponseCode();
++                            if (code / 100 != 2) throw new IOException("HTTP " + code);
++
++                            String guessed = URLUtil.guessFileName(urlStr, null, conn.getContentType());
++                            String fileName = guessed != null && !guessed.isEmpty() ? guessed : ("userscript-" + System.currentTimeMillis() + ".user.js");
++                            if (!fileName.endsWith(".user.js")) fileName = fileName + ".user.js";
++
++                            File outDir = new File(context.getCacheDir(), "userscripts");
++                            if (!outDir.exists()) outDir.mkdirs();
++                            File outFile = new File(outDir, fileName);
++
++                            try (InputStream in = conn.getInputStream(); FileOutputStream out = new FileOutputStream(outFile)) {
++                                byte[] buf = new byte[8192];
++                                int n;
++                                while ((n = in.read(buf)) != -1) {
++                                    out.write(buf, 0, n);
++                                }
++                            } finally {
++                                conn.disconnect();
++                            }
++
++                            Uri uri = Uri.fromFile(outFile);
++                            new Handler(Looper.getMainLooper()).post(() -> {
++                                TryToInstall(context, uri.toString());
++                            });
++                        } catch (Exception e) {
++                            Log.e(TAG, "UserScript URL download error", e);
++                            new Handler(Looper.getMainLooper()).post(() -> {
++                                Toast.makeText(context, "Failed to download script: " + e.getMessage(), Toast.LENGTH_LONG).show();
++                            });
++                        }
++                    }).start();
++                })
++                .setNegativeButton(context.getString(R.string.cancel), null)
++                .show();
++    }
+ 
+     public static List<ScriptInfo> getUserScriptItems() {
+         List<ScriptInfo> list = new ArrayList<>();
+         try {
+             String json = UserScriptsBridgeJni.get().getScriptsInfo();

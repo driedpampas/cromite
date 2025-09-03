@@ -1,0 +1,30 @@
+From: driedpampas <driedpampas@github.com>
+Date: Mon, 3 Sep 2025 12:00:00 +0000
+Subject: Add URL support to userScripts API
+
+This patch adds support for loading userscripts directly from URLs
+in addition to local files and inline code.
+
+---
+ tools/under-control/src/extensions/common/api/user_scripts.idl | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/tools/under-control/src/extensions/common/api/user_scripts.idl b/tools/under-control/src/extensions/common/api/user_scripts.idl
+index abc123..def456 100644
+--- a/tools/under-control/src/extensions/common/api/user_scripts.idl
++++ b/tools/under-control/src/extensions/common/api/user_scripts.idl
+@@ -18,9 +18,13 @@ namespace userScripts {
+   // The source of the script to inject.
+   dictionary ScriptSource {
+     // A string containing the JavaScript code to inject. Exactly one of
+-    // <code>file</code> or <code>code</code> must be specified.
++    // <code>file</code>, <code>code</code>, or <code>url</code> must be specified.
+     DOMString? code;
+     // The path of the JavaScript file to inject relative to the extension's
+     // root directory. Exactly one of <code>file</code>, <code>code</code>, or
++    // <code>url</code> must be specified.
+     DOMString? file;
++    // The URL of the JavaScript file to fetch and inject. Exactly one of
++    // <code>file</code>, <code>code</code>, or <code>url</code> must be specified.
++    DOMString? url;
+   };

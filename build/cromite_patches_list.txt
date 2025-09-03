@@ -127,6 +127,7 @@ mime_util-force-text-x-suse-ymp-to-be-downloaded.patch
 Client-hints-overrides.patch
 Allow-building-without-enable_reporting.patch
 Experimental-user-scripts-support.patch
+Add-userscripts-import-from-url-android.patch
 Keep-empty-tabs-between-sessions.patch
 Disable-third-party-origin-trials.patch
 Never-use-HTTP-probes-for-connection-detection.patch
@@ -317,7 +318,7 @@ Temp-disable-experimental-web-platform-features.patch
 Block-leakage-of-urls-in-sandbox-iframes.patch
 Temporarily-disable-Tab-Group-Sync-Android.patch
 Fix-chromium-build-bugs.patch
-Try-to-fix-2082.patch
+add_userscript_from_url.patch
 
 # adblock patches
 eyeo-133.0.6943.49-base.patch
