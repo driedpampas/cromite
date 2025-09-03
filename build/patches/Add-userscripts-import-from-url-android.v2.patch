@@ -1,0 +1,117 @@
+From: GitHub Copilot <copilot@users.noreply.github.com>
+Date: Wed, 3 Sep 2025 12:30:00 +0000
+Subject: Add URL import helper for Userscripts on Android (bridge only)
+
+Add a PromptAndAddScriptFromUrl(WindowAndroid) helper to
+UserScriptsBridge that downloads a .user.js from a URL to cache
+and invokes the existing TryToInstall flow. This minimizes risk
+by avoiding UI file edits; callers can wire a UI trigger later
+(e.g., long-press on the Add button).
+
+---
+ components/user_scripts/android/java/src/org/chromium/components/user_scripts/UserScriptsBridge.java | 83 ++++++++++++++++++++++++
+ 1 file changed, 83 insertions(+)
+
+diff --git a/components/user_scripts/android/java/src/org/chromium/components/user_scripts/UserScriptsBridge.java b/components/user_scripts/android/java/src/org/chromium/components/user_scripts/UserScriptsBridge.java
+--- a/components/user_scripts/android/java/src/org/chromium/components/user_scripts/UserScriptsBridge.java
++++ b/components/user_scripts/android/java/src/org/chromium/components/user_scripts/UserScriptsBridge.java
+@@ -121,6 +121,89 @@ public class UserScriptsBridge {
+             null);
+     }
+ 
+     public static void TryToInstall(Context context, String ScriptFullPath) {
+         DialogInterface.OnClickListener dialogClickListener = new DialogInterface.OnClickListener() {
+             @Override
+             public void onClick(DialogInterface dialog, int which) {
+                 switch (which){
+                     case DialogInterface.BUTTON_POSITIVE:
+                         UserScriptsBridgeJni.get().tryToInstall(ScriptFullPath);
+                         break;
+ 
+                     case DialogInterface.BUTTON_NEGATIVE:
+                         break;
+                 }
+             }
+         };
+ 
+         String scriptName = ScriptFullPath;
+         if (ContentUriUtils.isContentUri(scriptName)) {
+             scriptName = ContentUriUtils.getFilePathFromContentUri(Uri.parse(scriptName));
+             if (scriptName == null) {
+                 // fallback to content uri name if fail
+                 scriptName = ContentUriUtils.getDisplayName(Uri.parse(ScriptFullPath), context,
+                     MediaStore.MediaColumns.DISPLAY_NAME);
+             }
+         }
+ 
+         String message = context.getString(R.string.ask_to_install, scriptName);
+ 
+         AlertDialog.Builder builder = new AlertDialog.Builder(context);
+         builder.setMessage(message)
+             .setPositiveButton(context.getString(R.string.ok), dialogClickListener)
+             .setNegativeButton(context.getString(R.string.no), dialogClickListener)
+             .show();
+     }
++
++    // Downloads a userscript from URL and invokes TryToInstall.
++    public static void PromptAndAddScriptFromUrl(WindowAndroid window) {
++        Context context = window.getContext().get();
++        if (context == null) return;
++
++        final android.widget.EditText input = new android.widget.EditText(context);
++        input.setInputType(android.text.InputType.TYPE_TEXT_VARIATION_URI);
++
++        new AlertDialog.Builder(context)
++                .setTitle("Enter URL")
++                .setView(input)
++                .setPositiveButton(context.getString(R.string.ok), (dialog, which) -> {
++                    String urlStr = input.getText().toString().trim();
++                    if (urlStr.isEmpty()) return;
++                    if (!(urlStr.startsWith("http://") || urlStr.startsWith("https://"))) {
++                        android.widget.Toast.makeText(context, "Only http(s) URLs are supported", android.widget.Toast.LENGTH_LONG).show();
++                        return;
++                    }
++                    new Thread(() -> {
++                        try {
++                            java.net.URL url = new java.net.URL(urlStr);
++                            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) url.openConnection();
++                            conn.setInstanceFollowRedirects(true);
++                            conn.setConnectTimeout(15000);
++                            conn.setReadTimeout(30000);
++                            int code = conn.getResponseCode();
++                            if (code / 100 != 2) throw new java.io.IOException("HTTP " + code);
++
++                            String guessed = android.webkit.URLUtil.guessFileName(urlStr, null, conn.getContentType());
++                            String fileName = (guessed != null && !guessed.isEmpty()) ? guessed : ("userscript-" + System.currentTimeMillis() + ".user.js");
++                            if (!fileName.endsWith(".user.js")) fileName = fileName + ".user.js";
++
++                            java.io.File outDir = new java.io.File(context.getCacheDir(), "userscripts");
++                            if (!outDir.exists()) outDir.mkdirs();
++                            java.io.File outFile = new java.io.File(outDir, fileName);
++
++                            try (java.io.InputStream in = conn.getInputStream(); java.io.FileOutputStream out = new java.io.FileOutputStream(outFile)) {
++                                byte[] buf = new byte[8192];
++                                int n;
++                                while ((n = in.read(buf)) != -1) {
++                                    out.write(buf, 0, n);
++                                }
++                            } finally {
++                                conn.disconnect();
++                            }
++
++                            Uri uri = Uri.fromFile(outFile);
++                            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
++                                TryToInstall(context, uri.toString());
++                            });
++                        } catch (Exception e) {
++                            Log.e(TAG, "UserScript URL download error", e);
++                            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
++                                android.widget.Toast.makeText(context, "Failed to download script: " + e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
++                            });
++                        }
++                    }).start();
++                })
++                .setNegativeButton(context.getString(R.string.cancel), null)
++                .show();
++    }
+*** End Patch
