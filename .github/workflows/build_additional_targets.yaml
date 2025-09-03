@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       sha:
-        description: 'uazo/cromite SHA'
+        description: 'driedpampas/cromite SHA'
         required: true
         default: ''
       type:
@@ -63,22 +63,22 @@ jobs:
 
           cd cromite/tools
 
-      - name: Get uazo/cromite-build from docker hub if present
+      - name: Get driedpampas/cromite-build from docker hub if present
         shell: bash
         run: |
-          IS_PRESENT=$(docker manifest inspect uazo/cromite-build:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
+          IS_PRESENT=$(docker manifest inspect driedpampas/cromite-build:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
           if [ $IS_PRESENT -eq "0" ]; then
-            docker pull uazo/cromite-build:$VERSION-$CROMITE_SHA
+            docker pull driedpampas/cromite-build:$VERSION-$CROMITE_SHA
           fi
 
       - name: Mark image to build
         shell: bash
         run: |
-          IS_PRESENT=$(docker inspect --type=image uazo/cromite-build:build > /dev/null ; echo $?)
+          IS_PRESENT=$(docker inspect --type=image driedpampas/cromite-build:build > /dev/null ; echo $?)
           if [ $IS_PRESENT -eq "0" ]; then
-            docker rmi uazo/cromite-build:build
+            docker rmi driedpampas/cromite-build:build
           fi
-          docker tag uazo/cromite-build:$VERSION-$CROMITE_SHA uazo/cromite-build:build
+          docker tag driedpampas/cromite-build:$VERSION-$CROMITE_SHA driedpampas/cromite-build:build
 
   build:
     runs-on: ${{ github.event.inputs.type }}
@@ -87,7 +87,7 @@ jobs:
     timeout-minutes: 1440
 
     container:
-      image: uazo/cromite-build:build
+      image: driedpampas/cromite-build:build
       env:
         REMOVEDOCKERSUPPORT: true # CUSTOM RUNNER: remove sharing of docker socket
         USELOCALIMAGE: true       # CUSTOM RUNNER: permit use of local images

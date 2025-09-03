@@ -1,6 +1,6 @@
 ARG VERSION
 
-FROM uazo/chromium:$VERSION
+FROM driedpampas/chromium:$VERSION
 
 ARG CROMITE_SHA
 ENV CROMITE_SHA=$CROMITE_SHA
@@ -23,7 +23,7 @@ RUN sudo chmod +x ./apply-cromite-patches.sh && \
     mkdir cromite && \
     cd cromite && \
     git init && \
-    git remote add origin https://github.com/uazo/cromite && \
+    git remote add origin https://github.com/driedpampas/cromite && \
     git fetch origin $CROMITE_SHA && \
     git reset --hard FETCH_HEAD && \
     cd ..

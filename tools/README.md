@@ -29,10 +29,10 @@ cp .env.example .env
 ```
 RUNNER_NAME=pd-gh-runner
 GITHUB_PERSONAL_TOKEN=<git-token>
-GITHUB_OWNER=uazo
+GITHUB_OWNER=driedpampas
 GITHUB_REPOSITORY=bromite-buildtools
 RUNNER_LABELS=dev
-ALLOWEDAUTHORSLIST=uazo
+ALLOWEDAUTHORSLIST=driedpampas
 ```
 
 5. Prepare for windows cross build
@@ -67,7 +67,7 @@ cd bromite-buildtools/images/github-runner/
 
 ### Test Android Version
 
-Simply download latest build on https://github.com/uazo/bromite-buildtools/releases/latest
+Simply download latest build on https://github.com/driedpampas/bromite-buildtools/releases/latest
 
 ### Test Windows Version
 
@@ -78,7 +78,7 @@ Simply download latest build on https://github.com/uazo/bromite-buildtools/relea
 [chrlauncher]
 
 # Custom Chromium update URL (string):
-ChromiumUpdateUrl=https://github.com/uazo/bromite-buildtools/releases/latest/download/updateurl.txt
+ChromiumUpdateUrl=https://github.com/driedpampas/bromite-buildtools/releases/latest/download/updateurl.txt
 
 # Command line for Chromium (string):
 # See here: http://peter.sh/experiments/chromium-command-line-switches/

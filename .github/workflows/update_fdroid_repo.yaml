@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ github.event.inputs.type }}
 
     container:
-      image: uazo/fdroidserver:latest
+      image: driedpampas/fdroidserver:latest
       volumes:
         - /tmp/forward-proxy:/tmp/forward-proxy
 
@@ -50,9 +50,9 @@ jobs:
             DEBIAN_FRONTEND=noninteractive apt install -y fdroidserver
 
             cd fdroid/repo/
-            wget https://github.com/uazo/cromite/releases/latest/download/arm_ChromePublic.apk
-            wget https://github.com/uazo/cromite/releases/latest/download/arm64_ChromePublic.apk
-            wget https://github.com/uazo/cromite/releases/latest/download/x64_ChromePublic.apk
+            wget https://github.com/driedpampas/cromite/releases/latest/download/arm_ChromePublic.apk
+            wget https://github.com/driedpampas/cromite/releases/latest/download/arm64_ChromePublic.apk
+            wget https://github.com/driedpampas/cromite/releases/latest/download/x64_ChromePublic.apk
 
             test arm_ChromePublic.apk.1 && rm arm_ChromePublic.apk && mv arm_ChromePublic.apk.1 arm_ChromePublic.apk
             test arm64_ChromePublic.apk.1 && rm arm64_ChromePublic.apk && mv arm64_ChromePublic.apk.1 arm64_ChromePublic.apk

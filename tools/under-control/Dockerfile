@@ -1,5 +1,5 @@
 ARG TAG=latest
-FROM uazo/chromium:${TAG} AS source
+FROM driedpampas/chromium:${TAG} AS source
 
 ENV CHR_SOURCE_DIR=/home/lg/working_dir/chromium/src/
 ENV OUTPUT_DIR=/home/lg/working_dir/out/

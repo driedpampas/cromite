@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       sha:
-        description: 'uazo/cromite SHA'
+        description: 'driedpampas/cromite SHA'
         required: true
         default: ''
       target_os:
@@ -84,16 +84,15 @@ jobs:
       - name: Building build-deps container ${{ env.VERSION }}
         shell: bash
         run: |
-          docker pull uazo/build-deps:$VERSION || true
-          IS_PRESENT=$(docker inspect --type=image uazo/build-deps:$VERSION > /dev/null ; echo $?)
+          docker pull driedpampas/build-deps:$VERSION || true
+          IS_PRESENT=$(docker inspect --type=image driedpampas/build-deps:$VERSION > /dev/null ; echo $?)
           if [ $IS_PRESENT -ne "0" ]; then
-            IS_PRESENT=$(./regctl image inspect uazo/build-deps:$VERSION > /dev/null ; echo $?)
+            IS_PRESENT=$(./regctl image inspect driedpampas/build-deps:$VERSION > /dev/null ; echo $?)
             if [ $IS_PRESENT -ne "0" ]; then
-              DOCKER_BUILDKIT=1 docker build -t uazo/build-deps:$VERSION \
-                --progress plain \
-                --build-arg VERSION=$VERSION \
-                --build-arg HTTP_PROXY="$PROXY_ADDR" \
-                --no-cache \
+              DOCKER_BUILDKIT=1 docker build -t driedpampas/build-deps:$VERSION 
+                --progress plain 
+                --build-arg VERSION=$VERSION 
+                --build-arg HTTP_PROXY="$PROXY_ADDR" 
                 cromite/tools/images/build-deps/.
             fi
           fi
@@ -101,12 +100,12 @@ jobs:
       - name: Building chromium container ${{ env.VERSION }}
         shell: bash
         run: |
-          docker pull uazo/chromium:$VERSION || true
-          IS_PRESENT=$(docker inspect --type=image uazo/chromium:$VERSION > /dev/null ; echo $?)
+          docker pull driedpampas/chromium:$VERSION || true
+          IS_PRESENT=$(docker inspect --type=image driedpampas/chromium:$VERSION > /dev/null ; echo $?)
           if [ $IS_PRESENT -ne "0" ]; then
-            IS_PRESENT=$(./regctl image inspect uazo/chromium:$VERSION > /dev/null ; echo $?)
+            IS_PRESENT=$(./regctl image inspect driedpampas/chromium:$VERSION > /dev/null ; echo $?)
             if [ $IS_PRESENT -ne "0" ]; then
-              DOCKER_BUILDKIT=1 docker build -t uazo/chromium:$VERSION \
+              DOCKER_BUILDKIT=1 docker build -t driedpampas/chromium:$VERSION \
                 --progress plain \
                 --build-arg VERSION=$VERSION \
                 --build-arg HTTP_PROXY="$PROXY_ADDR" \
@@ -117,12 +116,12 @@ jobs:
       - name: Building cromite container ${{ env.VERSION }}-${{ env.CROMITE_SHA }}
         shell: bash
         run: |
-          docker pull uazo/cromite:$VERSION-$CROMITE_SHA || true
-          IS_PRESENT=$(docker inspect --type=image uazo/cromite:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
+          docker pull driedpampas/cromite:$VERSION-$CROMITE_SHA || true
+          IS_PRESENT=$(docker inspect --type=image driedpampas/cromite:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
           if [ $IS_PRESENT -ne "0" ]; then
-            IS_PRESENT=$(./regctl image inspect uazo/cromite:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
+            IS_PRESENT=$(./regctl image inspect driedpampas/cromite:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
             if [ $IS_PRESENT -ne "0" ]; then
-              DOCKER_BUILDKIT=1 docker build -t uazo/cromite:$VERSION-$CROMITE_SHA --progress plain \
+              DOCKER_BUILDKIT=1 docker build -t driedpampas/cromite:$VERSION-$CROMITE_SHA --progress plain \
                 --build-arg CROMITE_SHA=$CROMITE_SHA \
                 --build-arg VERSION=$VERSION \
                 --build-arg HTTP_PROXY="$PROXY_ADDR" \
@@ -133,12 +132,12 @@ jobs:
       - name: Building cromite-build container ${{ env.VERSION }}-${{ env.CROMITE_SHA }}
         shell: bash
         run: |
-          docker pull uazo/cromite-build:$VERSION-$CROMITE_SHA || true
-          IS_PRESENT=$(docker inspect --type=image uazo/cromite-build:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
+          docker pull driedpampas/cromite-build:$VERSION-$CROMITE_SHA || true
+          IS_PRESENT=$(docker inspect --type=image driedpampas/cromite-build:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
           if [ $IS_PRESENT -ne "0" ]; then
-            IS_PRESENT=$(./regctl image inspect uazo/cromite-build:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
+            IS_PRESENT=$(./regctl image inspect driedpampas/cromite-build:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
             if [ $IS_PRESENT -ne "0" ]; then
-              DOCKER_BUILDKIT=1 docker build -t uazo/cromite-build:$VERSION-$CROMITE_SHA --progress plain \
+              DOCKER_BUILDKIT=1 docker build -t driedpampas/cromite-build:$VERSION-$CROMITE_SHA --progress plain \
                 --build-arg CROMITE_SHA=$CROMITE_SHA \
                 --build-arg VERSION=$VERSION \
                 --build-arg HTTP_PROXY="$PROXY_ADDR" \
@@ -147,22 +146,22 @@ jobs:
             fi
           fi
 
-      - name: Get uazo/cromite-build from docker hub if present
+      - name: Get driedpampas/cromite-build from docker hub if present
         shell: bash
         run: |
-          IS_PRESENT=$(./regctl image inspect uazo/cromite-build:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
+          IS_PRESENT=$(./regctl image inspect driedpampas/cromite-build:$VERSION-$CROMITE_SHA > /dev/null ; echo $?)
           if [ $IS_PRESENT -eq "0" ]; then
-            docker pull uazo/cromite-build:$VERSION-$CROMITE_SHA
+            docker pull driedpampas/cromite-build:$VERSION-$CROMITE_SHA
           fi
 
       - name: Mark image to build
         shell: bash
         run: |
-          IS_PRESENT=$(docker inspect --type=image uazo/cromite-build:build > /dev/null ; echo $?)
+          IS_PRESENT=$(docker inspect --type=image driedpampas/cromite-build:build > /dev/null ; echo $?)
           if [ $IS_PRESENT -eq "0" ]; then
-            docker rmi uazo/cromite-build:build
+            docker rmi driedpampas/cromite-build:build
           fi
-          docker tag uazo/cromite-build:$VERSION-$CROMITE_SHA uazo/cromite-build:build
+          docker tag driedpampas/cromite-build:$VERSION-$CROMITE_SHA driedpampas/cromite-build:build
 
   build:
     runs-on: ${{ github.event.inputs.type }}
@@ -171,7 +170,7 @@ jobs:
     timeout-minutes: 1440
 
     container:
-      image: uazo/cromite-build:build
+      image: driedpampas/cromite-build:build
       env:
         REMOVEDOCKERSUPPORT: true # CUSTOM RUNNER: remove sharing of docker socket
         USELOCALIMAGE: true       # CUSTOM RUNNER: permit use of local images

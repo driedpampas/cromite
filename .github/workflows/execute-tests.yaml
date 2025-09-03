@@ -15,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       sha:
-        description: 'uazo/bromite SHA'
+        description: 'driedpampas/cromite SHA'
         required: true
         default: 'ce2f07034a3d3b257e9bada65d8293a6786bb95f'
 
@@ -31,7 +31,7 @@ jobs:
       - name: Mark image to test
         shell: bash
         run: |
-          docker tag uazo/bromite-build:$BROMITE_SHA uazo/bromite-build:test
+          docker tag driedpampas/cromite-build:$BROMITE_SHA driedpampas/cromite-build:test
 
   exec-test:
     runs-on: self-hosted
@@ -39,7 +39,7 @@ jobs:
     if: success()
 
     container:
-      image: uazo/bromite-build:test
+      image: driedpampas/cromite-build:test
       env:
         REMOVEDOCKERSUPPORT: true # CUSTOM RUNNER: remove sharing of docker socket
         USELOCALIMAGE: true       # CUSTOM RUNNER: permit use of local images

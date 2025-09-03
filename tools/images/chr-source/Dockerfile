@@ -1,6 +1,6 @@
 ARG VERSION
 
-FROM uazo/build-deps:$VERSION
+FROM driedpampas/build-deps:$VERSION
 ARG VERSION
 ENV VERSION=$VERSION
 

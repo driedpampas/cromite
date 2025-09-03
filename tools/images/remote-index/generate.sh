@@ -12,7 +12,7 @@ test -d $FLD || echo "wrong directory" && exit 1
 cp $FLD/cromite.idx .
 cp $FLD/RELEASE .
 
-DOCKER_BUILDKIT=1 docker build -t uazo/bromite-remote-index:$INDEX_VERSION \
+DOCKER_BUILDKIT=1 docker build -t driedpampas/cromite-remote-index:$INDEX_VERSION \
                 --progress plain \
                 --no-cache \
                 .

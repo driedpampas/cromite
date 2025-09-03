@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       rtag:
-        description: 'uazo/cromite TAG or COMMIT'
+        description: 'driedpampas/cromite TAG or COMMIT'
         required: true
         default: ''
 
@@ -53,9 +53,9 @@ jobs:
           unzip pup_v0.4.0_linux_amd64.zip
           rm pup_v0.4.0_linux_amd64.zip
 
-          BRANCH=$(curl https://github.com/uazo/cromite/branch_commits/$RTAG | ./pup -p li.branch:last-child a text{})
+          BRANCH=$(curl https://github.com/driedpampas/cromite/branch_commits/$RTAG | ./pup -p li.branch:last-child a text{})
           if [ -z "${BRANCH}" ]; then
-            BRANCH=$(curl https://github.com/uazo/cromite/branch_commits/$RTAG a | ./pup -p li.branch:first-child a text{})
+            BRANCH=$(curl https://github.com/driedpampas/cromite/branch_commits/$RTAG a | ./pup -p li.branch:first-child a text{})
           fi
           if [ -z "${BRANCH}" ]; then
             echo "Can not recover the base commit"
@@ -63,10 +63,10 @@ jobs:
           fi
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
-      - name: Checkout 'uazo/cromite' ${{ env.BRANCH }}
+      - name: Checkout 'driedpampas/cromite' ${{ env.BRANCH }}
         uses: actions/checkout@v2
         with:
-            repository: 'uazo/cromite'
+            repository: 'driedpampas/cromite'
             ref: ${{ github.event.inputs.rtag }}
             path: 'cromite'
             fetch-depth: 1
@@ -144,7 +144,7 @@ jobs:
           token: ${{ secrets.CROMITE_PULLS }}
           path: cromite
           base: ${{ env.BRANCH }}
-          #push-to-fork: uazo/cromite
+          #push-to-fork: driedpampas/cromite
           add-paths: |
             build/patches/*.patch
           commit-message: '[AUTO] Patches auto-rebase'

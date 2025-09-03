@@ -114,18 +114,18 @@ jobs:
       - name: Building build-deps container ${{ env.VERSION }}
         shell: bash
         run: |
-          IS_PRESENT=$(docker inspect --type=image uazo/build-deps:$CHR_VERSION > /dev/null ; echo $?)
+          IS_PRESENT=$(docker inspect --type=image driedpampas/build-deps:$CHR_VERSION > /dev/null ; echo $?)
           if [ $IS_PRESENT -ne "0" ]; then
-            IS_PRESENT=$(./regctl image inspect uazo/build-deps:$CHR_VERSION > /dev/null ; echo $?)
+            IS_PRESENT=$(./regctl image inspect driedpampas/build-deps:$CHR_VERSION > /dev/null ; echo $?)
             if [ $IS_PRESENT -ne "0" ]; then
-              DOCKER_BUILDKIT=1 docker build -t uazo/build-deps:$CHR_VERSION \
+              DOCKER_BUILDKIT=1 docker build -t driedpampas/build-deps:$CHR_VERSION \
                 --progress plain \
                 --build-arg VERSION=$CHR_VERSION \
                 --build-arg HTTP_PROXY="$PROXY_ADDR" \
                 --no-cache \
                 cromite/tools/images/build-deps/.
 
-              docker push uazo/build-deps:$CHR_VERSION
+              docker push driedpampas/build-deps:$CHR_VERSION
               echo "NEW_VERSION=$CHR_VERSION" >> $GITHUB_ENV
             fi
           fi
@@ -133,17 +133,17 @@ jobs:
       - name: Building chromium container ${{ env.VERSION }}
         shell: bash
         run: |
-          IS_PRESENT=$(docker inspect --type=image uazo/chromium:$CHR_VERSION > /dev/null ; echo $?)
+          IS_PRESENT=$(docker inspect --type=image driedpampas/chromium:$CHR_VERSION > /dev/null ; echo $?)
           if [ $IS_PRESENT -ne "0" ]; then
-            IS_PRESENT=$(./regctl image inspect uazo/chromium:$CHR_VERSION > /dev/null ; echo $?)
+            IS_PRESENT=$(./regctl image inspect driedpampas/chromium:$CHR_VERSION > /dev/null ; echo $?)
             if [ $IS_PRESENT -ne "0" ]; then
-              DOCKER_BUILDKIT=1 docker build -t uazo/chromium:$CHR_VERSION \
+              DOCKER_BUILDKIT=1 docker build -t driedpampas/chromium:$CHR_VERSION \
                 --progress plain \
                 --build-arg VERSION=$CHR_VERSION \
                 --build-arg HTTP_PROXY="$PROXY_ADDR" \
                 cromite/tools/images/chr-source/.
 
-              docker push uazo/chromium:$CHR_VERSION
+              docker push driedpampas/chromium:$CHR_VERSION
               echo "NEW_VERSION=$CHR_VERSION" >> $GITHUB_ENV
             fi
           fi

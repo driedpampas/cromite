@@ -1,4 +1,4 @@
-# CROMITE PRIVACY POLICY
+# CRO<br>Cromite check address "https://github.com/driedpampas/cromite/releases/download" once a dayITE PRIVACY POLICY
 
 ## SUMMARY
 This document describes the features in Cromite that communicate with third-party services: some of these settings are active by default but can be easy deactivated via the user interface.
